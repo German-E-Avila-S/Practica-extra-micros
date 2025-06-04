@@ -1,0 +1,34 @@
+const int ledPin = 2;  
+bool parpadeo = true; 
+char datoRecibido;
+
+void setup() {
+  Serial.begin(115200);
+  pinMode(ledPin, OUTPUT);
+  Serial.println("Iniciando parpadeo. Envia 'S' para detener, 'R' para reanudar.");
+}
+
+void loop() {
+  if (Serial.available() > 0) {
+    datoRecibido = Serial.read();
+
+    if (datoRecibido == 'S') {
+      parpadeo = false;
+      digitalWrite(ledPin, LOW); 
+      Serial.println("Parpadeo detenido.");
+    } else if (datoRecibido == 'R') {
+      parpadeo= true;
+      Serial.println("Parpadeo reanudado.");
+    }
+  }
+
+  // Parpadeo si está activo
+  if (parpadeo) {
+    digitalWrite(ledPin, HIGH);
+    delay(500);
+    digitalWrite(ledPin, LOW);
+    delay(500);
+  } else {
+    delay(100); 
+  }
+}
