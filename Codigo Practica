@@ -1,34 +1,47 @@
-const int ledPin = 2;  
-bool parpadeo = true; 
-char datoRecibido;
+const int ledPin = 13;
+const int buttonPin = 2;
+
+volatile bool ledState = false;
+bool interruptEnabled = false; // Bandera para saber si la interrupción está activa
 
 void setup() {
-  Serial.begin(115200);
   pinMode(ledPin, OUTPUT);
-  Serial.println("Iniciando parpadeo. Envia 'S' para detener, 'R' para reanudar.");
+  pinMode(buttonPin, INPUT_PULLUP);
+
+  Serial.begin(9600);
+  Serial.println("Escribe 'ON' para activar la interrupción, 'OFF' para desactivarla.");
 }
 
 void loop() {
-  if (Serial.available() > 0) {
-    datoRecibido = Serial.read();
+  digitalWrite(ledPin, ledState);
 
-    if (datoRecibido == 'S') {
-      parpadeo = false;
-      digitalWrite(ledPin, LOW); 
-      Serial.println("Parpadeo detenido.");
-    } else if (datoRecibido == 'R') {
-      parpadeo= true;
-      Serial.println("Parpadeo reanudado.");
+  // Lee entrada desde el Monitor Serial
+  if (Serial.available()) {
+    String input = Serial.readStringUntil('\n');
+    input.trim(); // Elimina espacios en blanco y saltos de línea
+
+    if (input.equalsIgnoreCase("ON")) {
+      if (!interruptEnabled) {
+        attachInterrupt(digitalPinToInterrupt(buttonPin), toggleLED, FALLING);
+        interruptEnabled = true;
+        Serial.println("Interrupción ACTIVADA.");
+      } else {
+        Serial.println("La interrupción ya está activa.");
+      }
+    } else if (input.equalsIgnoreCase("OFF")) {
+      if (interruptEnabled) {
+        detachInterrupt(digitalPinToInterrupt(buttonPin));
+        interruptEnabled = false;
+        Serial.println("Interrupción DESACTIVADA.");
+      } else {
+        Serial.println("La interrupción ya está desactivada.");
+      }
+    } else {
+      Serial.println("Comando no reconocido. Usa 'ON' o 'OFF'.");
     }
   }
+}
 
-  // Parpadeo si está activo
-  if (parpadeo) {
-    digitalWrite(ledPin, HIGH);
-    delay(500);
-    digitalWrite(ledPin, LOW);
-    delay(500);
-  } else {
-    delay(100); 
-  }
+void toggleLED() {
+  ledState = !ledState;
 }
