@@ -1,7 +1,8 @@
 const int ledPin = 13;
+const int buttonPin = 2;
 
 volatile bool ledState = false;
-bool interruptEnabled = false; // Bandera para saber si la interrupción está activa
+bool interruptEnabled = false;
 
 void setup() {
   pinMode(ledPin, OUTPUT);
@@ -12,18 +13,27 @@ void setup() {
 }
 
 void loop() {
-  digitalWrite(ledPin, ledState);
+  // Muestra el estado actual del LED si la interrupción está activada
+  if (interruptEnabled) {
+    digitalWrite(ledPin, ledState);
+  } else {
+    // Parpadea automáticamente si no hay interrupción
+    digitalWrite(ledPin, HIGH);
+    delay(500);
+    digitalWrite(ledPin, LOW);
+    delay(500);
+  }
 
-  // Lee entrada desde el Monitor Serial
+  // Verifica comandos por Serial
   if (Serial.available()) {
     String input = Serial.readStringUntil('\n');
-    input.trim(); // Elimina espacios en blanco y saltos de línea
+    input.trim();
 
     if (input.equalsIgnoreCase("ON")) {
       if (!interruptEnabled) {
         attachInterrupt(digitalPinToInterrupt(buttonPin), toggleLED, FALLING);
         interruptEnabled = true;
-        Serial.println("Interrupción ACTIVADA.");
+        Serial.println("Interrupción ACTIVADA. El parpadeo se detiene.");
       } else {
         Serial.println("La interrupción ya está activa.");
       }
@@ -31,7 +41,7 @@ void loop() {
       if (interruptEnabled) {
         detachInterrupt(digitalPinToInterrupt(buttonPin));
         interruptEnabled = false;
-        Serial.println("Interrupción DESACTIVADA.");
+        Serial.println("Interrupción DESACTIVADA. El LED vuelve a parpadear.");
       } else {
         Serial.println("La interrupción ya está desactivada.");
       }
@@ -41,6 +51,7 @@ void loop() {
   }
 }
 
+// Función de interrupción
 void toggleLED() {
   ledState = !ledState;
 }
